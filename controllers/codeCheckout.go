@@ -21,7 +21,7 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
-//var PersonalAccessToken = "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"
+
 var DestFolder = "/tmp/vikas"
 
 //var dockerRegistryUserID = ""
