@@ -1,43 +1,18 @@
 package main
 
 import (
-	"fmt"
-	"net/http"
+	"os"
 
 	"github.com/gin-gonic/gin"
+	"github.com/vikas-gautam/golang_cicd/routes"
 )
 
-var ListenPort = "9090"
-
-type UserData struct {
-	RepoURL        string `json: "repourl"`
-	Branch         string `json: "branch"`
-	DockerfilePath string `json: dockerfilepath`
-}
-
 func main() {
-	router := gin.Default()
-	router.GET("/api/health", HealthCheck)
-	router.POST("/api/userdata", UserInput)
-	router.Run(":" + ListenPort)
-}
-
-//required apis
-// /api/userdata - POST
-// /api/userdata/id - POST
-
-//healthcheck api
-func HealthCheck(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{"msg": "application is ready to serve"})
-}
-
-//take user input
-func UserInput(c *gin.Context) {
-	var userdata UserData
-	if err := c.BindJSON(&userdata); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
+	ListenPort := os.Getenv("PORT")
+	if ListenPort == "" {
+		ListenPort = "9090"
 	}
-	fmt.Println(userdata)
-	c.JSON(http.StatusOK, gin.H{"Request has been successfully taken and your request was": userdata})
+	router := gin.Default()
+	routes.UserRoutes(router)
+	router.Run(":" + ListenPort)
 }
