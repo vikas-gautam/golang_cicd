@@ -9,6 +9,7 @@ require (
 	github.com/go-git/go-git/v5 v5.4.2
 	github.com/go-playground/validator/v10 v10.10.0
 	github.com/google/go-cmp v0.5.8 // indirect
+	github.com/joho/godotenv v1.4.0
 	github.com/moby/sys/mount v0.3.3 // indirect
 	github.com/opencontainers/runc v1.1.3 // indirect
 	github.com/rogpeppe/go-internal v1.8.1 // indirect
