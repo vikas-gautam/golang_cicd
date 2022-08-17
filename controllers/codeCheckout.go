@@ -35,10 +35,10 @@ type ErrorDetail struct {
 }
 
 type UserData struct {
-	RepoURL              string `json: "repourl"  validate:"required"`
-	Branch               string `json: "branch"`
-	DockerfileName       string `json: "dockerfilepath" validate:"required"`
-	dockerRegistryUserID string `json: dockerRegistryUserID validate: "required"`
+	RepoURL        string `json:"repourl"  validate:"required"`
+	Branch         string `json:"branch"`
+	DockerfileName string `json:"DockerfileName"`
+	DockerfilePath string `json:"dockerfilePath"`
 }
 
 //take user input and checkout code
@@ -49,14 +49,11 @@ func CodeCheckout(c *gin.Context) {
 		log.Fatalf("Some error occured. Err: %s", err)
 	}
 
+	var userdata UserData
+
 	dockerRegistryUserID := os.Getenv("dockerRegistryUserID")
 	if dockerRegistryUserID == "" {
 		dockerRegistryUserID = "vikas93/"
-	}
-
-	DockerfileName := os.Getenv("DockerfileName")
-	if DockerfileName == "" {
-		DockerfileName = "Dockerfile"
 	}
 
 	dockerRepoName := os.Getenv("dockerRepoName")
@@ -64,10 +61,21 @@ func CodeCheckout(c *gin.Context) {
 		dockerRepoName = "go-cicd"
 	}
 
-	var userdata UserData
 	if err := c.BindJSON(&userdata); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 	}
+	var dockerSrcPath = DestFolder + "/" + userdata.DockerfilePath
+
+	DockerfileName := userdata.DockerfileName
+	if DockerfileName == "" {
+		DockerfileName = "Dockerfile"
+	}
+
+	Branch := userdata.Branch
+	if Branch == "" {
+		Branch = "master"
+	}
+
 	validate := validator.New()
 	err = validate.Struct(userdata)
 	if err != nil {
@@ -85,7 +93,7 @@ func CodeCheckout(c *gin.Context) {
 	//clone given repo
 	_, errClone := git.PlainClone(DestFolder, false, &git.CloneOptions{
 		URL:           userdata.RepoURL,
-		ReferenceName: plumbing.ReferenceName("refs/heads/" + userdata.Branch),
+		ReferenceName: plumbing.ReferenceName("refs/heads/" + Branch),
 		Progress:      os.Stdout,
 	})
 	if errClone != nil {
@@ -94,13 +102,14 @@ func CodeCheckout(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{"msg": "repo cloned"})
 
-	//image build
+	//docker client for image build and push
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
 		fmt.Println(err.Error())
 		return
 	}
-	err = imageBuild(dockerRegistryUserID, dockerRepoName, userdata.DockerfileName, cli)
+
+	err = imageBuild(dockerRegistryUserID, dockerRepoName, DockerfileName, dockerSrcPath, cli)
 	if err != nil {
 		fmt.Println(err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -127,7 +136,7 @@ func CleanWorkspace(DestFolder string) {
 }
 
 //build and create artifact
-func imageBuild(dockerRegistryUserID string, dockerRepoName string, DockerfileName string, dockerClient *client.Client) error {
+func imageBuild(dockerRegistryUserID string, dockerRepoName string, DockerfileName string, dockerSrcPath string, dockerClient *client.Client) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*200)
 	defer cancel()
 
@@ -136,7 +145,9 @@ func imageBuild(dockerRegistryUserID string, dockerRepoName string, DockerfileNa
 		log.Fatalf("Some error occured. Err: %s", err)
 	}
 
-	tar, err := archive.TarWithOptions(DestFolder+"/attendance", &archive.TarOptions{})
+	fmt.Println(dockerSrcPath)
+
+	tar, err := archive.TarWithOptions(dockerSrcPath, &archive.TarOptions{})
 	if err != nil {
 		return err
 	}

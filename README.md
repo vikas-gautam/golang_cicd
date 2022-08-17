@@ -3,7 +3,6 @@
 ## create .env file in parent folder golang_cicd
 dockerRegistryUserID="vikas93/"
 dockerRepoName="go-cicd"
-DockerfileName="Dockerfile"
 PORT="9090"
 PersonalAccessToken="Value of PAT"
 #docker hub
