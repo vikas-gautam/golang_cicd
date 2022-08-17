@@ -21,6 +21,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-playground/validator/v10"
 	"github.com/joho/godotenv"
+	"github.com/vikas-gautam/golang_cicd/models"
 )
 
 var DestFolder = "/tmp/vikas"
@@ -34,12 +35,7 @@ type ErrorDetail struct {
 	Message string `json:"message"`
 }
 
-type UserData struct {
-	RepoURL        string `json:"repourl"  validate:"required"`
-	Branch         string `json:"branch"`
-	DockerfileName string `json:"DockerfileName"`
-	DockerfilePath string `json:"dockerfilePath"`
-}
+var userdata models.UserData
 
 //take user input and checkout code
 func CodeCheckout(c *gin.Context) {
@@ -48,8 +44,6 @@ func CodeCheckout(c *gin.Context) {
 	if err != nil {
 		log.Fatalf("Some error occured. Err: %s", err)
 	}
-
-	var userdata UserData
 
 	dockerRegistryUserID := os.Getenv("dockerRegistryUserID")
 	if dockerRegistryUserID == "" {
