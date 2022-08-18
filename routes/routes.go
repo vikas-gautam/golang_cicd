@@ -8,4 +8,5 @@ import (
 func UserRoutes(incomingRoutes *gin.Engine) {
 	incomingRoutes.GET("/api/health", controllers.HealthCheck)
 	incomingRoutes.POST("/api/checkout", controllers.CodeCheckout)
+	incomingRoutes.POST("/api/webhook", controllers.Gitwebhook)
 }
