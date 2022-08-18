@@ -1,6 +1,6 @@
 # golang_cicd
 
-## create .env file in parent folder golang_cicd
+**create .env file in parent folder golang_cicd**
 ```
 dockerRegistryUserID="vikas93/"
 dockerRepoName="go-cicd"
