@@ -1,23 +1,43 @@
 package controllers
 
 import (
-	"encoding/json"
 	"fmt"
-	"log"
+	"io/ioutil"
+	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/thedevsaddam/gojsonq/v2"
+	"github.com/vikas-gautam/golang_cicd/helpers"
+	"github.com/vikas-gautam/golang_cicd/models"
 )
 
 // healthcheck api
 func Gitwebhook(c *gin.Context) {
-	payload := make(map[string]interface{})
-	if err := c.BindJSON(&payload); err != nil {
+
+	jsonbyteData, err := ioutil.ReadAll(c.Request.Body)
+	if err != nil {
 		fmt.Println(err.Error())
 	}
-	json, err := json.MarshalIndent(payload, "", " ")
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Println(string(json))
-}
+	jsonString := string(jsonbyteData)
 
+	//commitId := gojsonq.New().FromString(jsonString).Find("commits.[0].id")
+	cloneRepoURL := gojsonq.New().FromString(jsonString).Find("repository.clone_url").(string)
+	ref := gojsonq.New().FromString(jsonString).Find("ref").(string)
+
+	branch := strings.ReplaceAll(ref, "refs/heads/", "")
+
+	fmt.Println(branch)
+	fmt.Println(cloneRepoURL)
+
+	var userdata models.UserData
+	repoUrl := fmt.Sprint(cloneRepoURL)
+
+	userdata.RepoURL = repoUrl
+	userdata.Branch = branch
+
+	if err = helpers.CodeCheckout(userdata.RepoURL, userdata.Branch, userdata.DockerfilePath); err != nil {
+		fmt.Println(err.Error())
+	}
+	c.JSON(http.StatusOK, gin.H{"msg": "Checkout has been completed"})
+}

@@ -1,4 +1,4 @@
-package controllers
+package helpers
 
 import (
 	"bufio"
@@ -9,17 +9,14 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"net/http"
 	"os"
 	"time"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/archive"
-	"github.com/gin-gonic/gin"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
-	"github.com/go-playground/validator/v10"
 	"github.com/joho/godotenv"
 	"github.com/vikas-gautam/golang_cicd/models"
 )
@@ -37,9 +34,8 @@ type ErrorDetail struct {
 
 var userdata models.UserData
 
-//take user input and checkout code
-func CodeCheckout(c *gin.Context) {
-
+// take user input and checkout code
+func CodeCheckout(repoURL string, branchName string, DockerfilePath string) error {
 	err := godotenv.Load(".env")
 	if err != nil {
 		log.Fatalf("Some error occured. Err: %s", err)
@@ -55,81 +51,55 @@ func CodeCheckout(c *gin.Context) {
 		dockerRepoName = "go-cicd"
 	}
 
-	if err := c.BindJSON(&userdata); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-	}
-	var dockerSrcPath = DestFolder + "/" + userdata.DockerfilePath
+	var dockerSrcPath = DestFolder + "/" + DockerfilePath
 
 	DockerfileName := userdata.DockerfileName
 	if DockerfileName == "" {
 		DockerfileName = "Dockerfile"
 	}
 
-	Branch := userdata.Branch
-	if Branch == "" {
-		Branch = "master"
-	}
-
-	validate := validator.New()
-	err = validate.Struct(userdata)
-	if err != nil {
-		// log out this error
-		log.Println(err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-	log.Println(userdata)
-	c.JSON(http.StatusOK, gin.H{"Request has been successfully taken and your request was": userdata})
+	Branch := branchName
 
 	//clean workspace before cloning repo
-	CleanWorkspace(DestFolder)
+	err = CleanWorkspace(DestFolder)
 
 	//clone given repo
 	_, errClone := git.PlainClone(DestFolder, false, &git.CloneOptions{
-		URL:           userdata.RepoURL,
+		URL:           repoURL,
 		ReferenceName: plumbing.ReferenceName("refs/heads/" + Branch),
 		Progress:      os.Stdout,
 	})
 	if errClone != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": errClone.Error()})
-		return
+		return errClone
 	}
-	c.JSON(http.StatusOK, gin.H{"msg": "repo cloned"})
+	fmt.Println("repo cloned")
 
 	//docker client for image build and push
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
 		fmt.Println(err.Error())
-		return
+		return err
 	}
 
 	err = imageBuild(dockerRegistryUserID, dockerRepoName, DockerfileName, dockerSrcPath, cli)
 	if err != nil {
-		fmt.Println(err.Error())
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
+		log.Fatal(err.Error())
+		return err
 	}
-	c.JSON(http.StatusOK, gin.H{"msg": "docker image has been created"})
+	fmt.Println("docker image has been created")
 
 	//push the docker image
 	err = imagePush(dockerRegistryUserID, dockerRepoName, cli)
 	if err != nil {
-		fmt.Println(err.Error())
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
+		log.Fatal(err.Error())
+		return err
 	}
-	c.JSON(http.StatusOK, gin.H{"msg": "docker image has been pushed successfully"})
+	fmt.Println("docker image has been pushed successfully")
 
+	return nil
 }
 
-//To remove older workspace
-func CleanWorkspace(DestFolder string) {
-	if err := os.RemoveAll(DestFolder); err != nil {
-		fmt.Println("not able to clean ws")
-	}
-}
-
-//build and create artifact
+// build and create artifact
 func imageBuild(dockerRegistryUserID string, dockerRepoName string, DockerfileName string, dockerSrcPath string, dockerClient *client.Client) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*200)
 	defer cancel()
