@@ -35,7 +35,7 @@ type ErrorDetail struct {
 var userdata models.UserData
 
 // take user input and checkout code
-func CodeCheckout(repoURL string, branchName string, DockerfilePath string) error {
+func CodeCheckout(repoURL string, branchName string, DockerfilePath string, imageVersion string) error {
 	err := godotenv.Load(".env")
 	if err != nil {
 		log.Fatalf("Some error occured. Err: %s", err)
@@ -81,7 +81,7 @@ func CodeCheckout(repoURL string, branchName string, DockerfilePath string) erro
 		return err
 	}
 
-	err = imageBuild(dockerRegistryUserID, dockerRepoName, DockerfileName, dockerSrcPath, cli)
+	err = imageBuild(dockerRegistryUserID, dockerRepoName, imageVersion, DockerfileName, dockerSrcPath, cli)
 	if err != nil {
 		log.Fatal(err.Error())
 		return err
@@ -89,7 +89,7 @@ func CodeCheckout(repoURL string, branchName string, DockerfilePath string) erro
 	fmt.Println("docker image has been created")
 
 	//push the docker image
-	err = imagePush(dockerRegistryUserID, dockerRepoName, cli)
+	err = imagePush(dockerRegistryUserID, dockerRepoName, imageVersion, cli)
 	if err != nil {
 		log.Fatal(err.Error())
 		return err
@@ -100,7 +100,7 @@ func CodeCheckout(repoURL string, branchName string, DockerfilePath string) erro
 }
 
 // build and create artifact
-func imageBuild(dockerRegistryUserID string, dockerRepoName string, DockerfileName string, dockerSrcPath string, dockerClient *client.Client) error {
+func imageBuild(dockerRegistryUserID string, dockerRepoName string, imageVersion string, DockerfileName string, dockerSrcPath string, dockerClient *client.Client) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*200)
 	defer cancel()
 
@@ -118,7 +118,7 @@ func imageBuild(dockerRegistryUserID string, dockerRepoName string, DockerfileNa
 
 	opts := types.ImageBuildOptions{
 		Dockerfile: DockerfileName,
-		Tags:       []string{dockerRegistryUserID + dockerRepoName},
+		Tags:       []string{dockerRegistryUserID + dockerRepoName + ":" + imageVersion},
 		Remove:     true,
 	}
 	res, err := dockerClient.ImageBuild(ctx, tar, opts)
@@ -161,7 +161,7 @@ func print(rd io.Reader) error {
 
 //image push
 
-func imagePush(dockerRegistryUserID string, dockerRepoName string, dockerClient *client.Client) error {
+func imagePush(dockerRegistryUserID string, dockerRepoName string, imageVersion string, dockerClient *client.Client) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*120)
 	defer cancel()
 
@@ -190,7 +190,7 @@ func imagePush(dockerRegistryUserID string, dockerRepoName string, dockerClient 
 	authConfigBytes, _ := json.Marshal(authConfig)
 	authConfigEncoded := base64.URLEncoding.EncodeToString(authConfigBytes)
 
-	tag := dockerRegistryUserID + dockerRepoName
+	tag := dockerRegistryUserID + dockerRepoName + ":" + imageVersion
 	opts := types.ImagePushOptions{RegistryAuth: authConfigEncoded}
 	rd, err := dockerClient.ImagePush(ctx, tag, opts)
 	if err != nil {
