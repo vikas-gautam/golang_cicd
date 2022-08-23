@@ -1,26 +1,17 @@
 package controllers
 
 import (
-	"bufio"
-	"context"
-	"encoding/base64"
-	"encoding/json"
-	"errors"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"os"
-	"time"
 
-	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/client"
-	"github.com/docker/docker/pkg/archive"
 	"github.com/gin-gonic/gin"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-playground/validator/v10"
 	"github.com/joho/godotenv"
+	"github.com/vikas-gautam/golang_cicd/helpers"
 	"github.com/vikas-gautam/golang_cicd/models"
 )
 
@@ -55,6 +46,8 @@ func CodeCheckoutApi(c *gin.Context) {
 		dockerRepoName = "go-cicd"
 	}
 
+	imageVersion := "latest"
+
 	if err := c.BindJSON(&userdata); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 	}
@@ -82,7 +75,11 @@ func CodeCheckoutApi(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"Request has been successfully taken and your request was": userdata})
 
 	//clean workspace before cloning repo
-	CleanWorkspace(DestFolder)
+	err = helpers.CleanWorkspace(DestFolder)
+	if err != nil {
+		fmt.Println(err.Error())
+		return
+	}
 
 	//clone given repo
 	_, errClone := git.PlainClone(DestFolder, false, &git.CloneOptions{
@@ -97,13 +94,13 @@ func CodeCheckoutApi(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"msg": "repo cloned"})
 
 	//docker client for image build and push
-	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	cli, err := helpers.DockerCommand_DockerClient()
 	if err != nil {
 		fmt.Println(err.Error())
 		return
 	}
 
-	err = imageBuild(dockerRegistryUserID, dockerRepoName, DockerfileName, dockerSrcPath, cli)
+	err = helpers.DockerCommand_ImageBuild(dockerRegistryUserID, dockerRepoName, imageVersion, DockerfileName, dockerSrcPath, cli)
 	if err != nil {
 		fmt.Println(err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -112,7 +109,7 @@ func CodeCheckoutApi(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"msg": "docker image has been created"})
 
 	//push the docker image
-	err = imagePush(dockerRegistryUserID, dockerRepoName, cli)
+	err = helpers.DockerCommand_ImagePush(dockerRegistryUserID, dockerRepoName, imageVersion, cli)
 	if err != nil {
 		fmt.Println(err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -120,119 +117,4 @@ func CodeCheckoutApi(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{"msg": "docker image has been pushed successfully"})
 
-}
-
-// To remove older workspace
-func CleanWorkspace(DestFolder string) {
-	if err := os.RemoveAll(DestFolder); err != nil {
-		fmt.Println("not able to clean ws")
-	}
-}
-
-// build and create artifact
-func imageBuild(dockerRegistryUserID string, dockerRepoName string, DockerfileName string, dockerSrcPath string, dockerClient *client.Client) error {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*200)
-	defer cancel()
-
-	err := godotenv.Load(".env")
-	if err != nil {
-		log.Fatalf("Some error occured. Err: %s", err)
-	}
-
-	fmt.Println(dockerSrcPath)
-
-	tar, err := archive.TarWithOptions(dockerSrcPath, &archive.TarOptions{})
-	if err != nil {
-		return err
-	}
-
-	opts := types.ImageBuildOptions{
-		Dockerfile: DockerfileName,
-		Tags:       []string{dockerRegistryUserID + dockerRepoName},
-		Remove:     true,
-	}
-	res, err := dockerClient.ImageBuild(ctx, tar, opts)
-	if err != nil {
-		return err
-	}
-
-	defer res.Body.Close()
-
-	err = print(res.Body)
-	if err != nil {
-		return err
-	}
-
-	return nil
-
-}
-
-func print(rd io.Reader) error {
-	var lastLine string
-
-	scanner := bufio.NewScanner(rd)
-	for scanner.Scan() {
-		lastLine = scanner.Text()
-		fmt.Println(scanner.Text())
-	}
-
-	errLine := &ErrorLine{}
-	json.Unmarshal([]byte(lastLine), errLine)
-	if errLine.Error != "" {
-		return errors.New(errLine.Error)
-	}
-
-	if err := scanner.Err(); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-//image push
-
-func imagePush(dockerRegistryUserID string, dockerRepoName string, dockerClient *client.Client) error {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*120)
-	defer cancel()
-
-	err := godotenv.Load(".env")
-	if err != nil {
-		log.Fatalf("Some error occured. Err: %s", err)
-	}
-
-	dockerUsername := os.Getenv("Username")
-	if dockerUsername == "" {
-		dockerUsername = "vikas93"
-	}
-	dockerPassword := os.Getenv("Password")
-
-	DockerServerAddress := os.Getenv("ServerAddress")
-	if DockerServerAddress == "" {
-		DockerServerAddress = "https://index.docker.io/v1/"
-	}
-
-	var authConfig = types.AuthConfig{
-		Username:      dockerUsername,
-		Password:      dockerPassword,
-		ServerAddress: DockerServerAddress,
-	}
-
-	authConfigBytes, _ := json.Marshal(authConfig)
-	authConfigEncoded := base64.URLEncoding.EncodeToString(authConfigBytes)
-
-	tag := dockerRegistryUserID + dockerRepoName
-	opts := types.ImagePushOptions{RegistryAuth: authConfigEncoded}
-	rd, err := dockerClient.ImagePush(ctx, tag, opts)
-	if err != nil {
-		return err
-	}
-
-	defer rd.Close()
-
-	err = print(rd)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }

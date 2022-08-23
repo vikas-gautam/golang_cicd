@@ -38,7 +38,7 @@ func Gitwebhook(c *gin.Context) {
 	userdata.RepoURL = repoUrl
 	userdata.Branch = branch
 
-	if err = helpers.CodeCheckout(userdata.RepoURL, userdata.Branch, userdata.DockerfilePath, imageVersion); err != nil {
+	if err = helpers.CI_CodeCheckout(userdata.RepoURL, userdata.Branch, userdata.DockerfilePath, imageVersion); err != nil {
 		fmt.Println(err.Error())
 	}
 	c.JSON(http.StatusOK, gin.H{"msg": "Checkout has been completed"})

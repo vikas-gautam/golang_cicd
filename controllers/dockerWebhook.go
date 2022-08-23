@@ -18,16 +18,27 @@ func Dockerwebhook(c *gin.Context) {
 		fmt.Println(err.Error())
 	}
 	jsonString := string(jsonbyteData)
-	//fmt.Println(jsonString)
 
+	//fetch required fields from body
 	imageTag := gojsonq.New().FromString(jsonString).Find("push_data.tag").(string)
 	imagePullURL := gojsonq.New().FromString(jsonString).Find("repository.repo_name").(string)
 
+	//create required fields to deploy application
+	imageName := imagePullURL + ":" + imageTag
+	containerName := "goApp"
+
+	//printing in logs
 	fmt.Println(imageTag)
 	fmt.Println(imagePullURL)
 
-	if err = helpers.CodeDeploy(imagePullURL, imageTag); err != nil {
+	//deployment with pushed image (dockerhub/artifactory)
+	if err = helpers.CD_CodeDeploy(imageName, containerName); err != nil {
 		fmt.Println(err.Error())
 	}
 	c.JSON(http.StatusOK, gin.H{"msg": "deployment has been completed"})
+	fmt.Println("deployment has been completed")
+
+	//list containers
+	conatainers := helpers.CD_ListContainers()
+	fmt.Println(conatainers)
 }
