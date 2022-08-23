@@ -16,6 +16,7 @@ import (
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/archive"
+	"github.com/docker/go-connections/nat"
 	"github.com/joho/godotenv"
 )
 
@@ -130,8 +131,18 @@ func DockerCommand_ImagePull(ctx context.Context, imageName string, dockerClient
 
 func DockerCommand_ContainerCreate(ctx context.Context, imageName string, containerName string, dockerClient *client.Client) (container.ContainerCreateCreatedBody, error) {
 
+	hostBinding := nat.PortBinding{
+		HostIP:   "0.0.0.0",
+		HostPort: "8000",
+	}
+	containerPort, _ := nat.NewPort("tcp", "80")
+
+	portBinding := nat.PortMap{containerPort: []nat.PortBinding{hostBinding}}
+
 	resp, err := dockerClient.ContainerCreate(ctx, &container.Config{
-		Image: imageName}, nil, nil, nil, containerName)
+		Image: imageName},
+		&container.HostConfig{PortBindings: portBinding},
+		nil, nil, containerName)
 	if err != nil {
 		panic(err)
 	}
