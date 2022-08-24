@@ -10,4 +10,5 @@ func UserRoutes(incomingRoutes *gin.Engine) {
 	incomingRoutes.POST("/api/checkout", controllers.CodeCheckoutApi)
 	incomingRoutes.POST("/api/webhook/git", controllers.Gitwebhook)
 	incomingRoutes.POST("/api/webhook/docker", controllers.Dockerwebhook)
+	incomingRoutes.GET("/go/homepage", controllers.Frontend)
 }
