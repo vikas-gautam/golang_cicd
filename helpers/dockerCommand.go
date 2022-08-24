@@ -158,13 +158,37 @@ func DockerCommand_ContainerStart(ctx context.Context, containerID string, docke
 
 }
 
+//list containers
+
 func DockerCommand_ListContainers(ctx context.Context, dockerClient *client.Client) []types.Container {
+
 	containers, err := dockerClient.ContainerList(ctx, types.ContainerListOptions{})
 	if err != nil {
 		panic(err)
 	}
 	return containers
 
+}
+
+// Stop and remove a container
+func DockerCommand_stopAndRemoveContainer(ctx context.Context, dockerClient *client.Client, containername string) error {
+	
+
+	if err := dockerClient.ContainerStop(ctx, containername, nil); err != nil {
+		log.Printf("Unable to stop container %s: %s", containername, err)
+	}
+
+	removeOptions := types.ContainerRemoveOptions{
+		RemoveVolumes: true,
+		Force:         true,
+	}
+
+	if err := dockerClient.ContainerRemove(ctx, containername, removeOptions); err != nil {
+		log.Printf("Unable to remove container: %s", err)
+		return err
+	}
+
+	return nil
 }
 
 func print(rd io.Reader) error {

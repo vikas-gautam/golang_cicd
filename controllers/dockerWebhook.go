@@ -37,8 +37,4 @@ func Dockerwebhook(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{"msg": "deployment has been completed"})
 	fmt.Println("deployment has been completed")
-
-	//list containers
-	conatainers := helpers.CD_ListContainers()
-	fmt.Println(conatainers)
 }
