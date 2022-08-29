@@ -1,0 +1,19 @@
+{
+ "app_name": "vikas",
+ "Services": [
+  {
+   "name": "vikas-service",
+   "repourl": "https://github.com/opstree/OT-Microservices.git",
+   "branch": "",
+   "DockerfileName": "",
+   "dockerfilePath": ""
+  },
+  {
+   "name": "sanjeev-service",
+   "repourl": "https://github.com/opstree/OT-Microservices.git",
+   "branch": "",
+   "DockerfileName": "",
+   "dockerfilePath": ""
+  }
+ ]
+}

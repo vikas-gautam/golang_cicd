@@ -1,0 +1,13 @@
+{
+ "app_name": "anu",
+ "new_onboarding": true,
+ "Services": [
+  {
+   "name": "anu-service",
+   "repourl": "https://github.com/opstree/OT-Microservices.git",
+   "branch": "",
+   "DockerfileName": "",
+   "dockerfilePath": ""
+  }
+ ]
+}

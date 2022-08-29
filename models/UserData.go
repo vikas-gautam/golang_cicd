@@ -6,3 +6,5 @@ type UserData struct {
 	DockerfileName string `json:"DockerfileName"`
 	DockerfilePath string `json:"dockerfilePath"`
 }
+
+
