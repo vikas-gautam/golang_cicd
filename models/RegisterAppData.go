@@ -2,8 +2,8 @@ package models
 
 type RegisterAppData struct {
 	AppName       string        `json:"app_name" validate:"required"`
-	NewOnboarding *bool         `json:"new_onboarding" validate:"required"`
-	Services      []ServiceName `json:"Services" validate:"required,dive"`
+	NewOnboarding *bool         `json:"new_onboarding" validate:"required"` // using pointer type use validate
+	Services      []ServiceName `json:"Services" validate:"required,dive"`  //using dive to ensure struct's fields are validating
 }
 
 type ServiceName struct {

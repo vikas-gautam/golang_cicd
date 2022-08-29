@@ -7,8 +7,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"path/filepath"
-	"regexp"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
@@ -32,57 +30,58 @@ func RegisterApp(c *gin.Context) {
 	}
 
 	fmt.Println(*appData.NewOnboarding)
+	filePath := "/home/vikash/go_registerdApp/"
+	os.MkdirAll(filePath, 0755)
+	fileName := filePath + appData.AppName + "." + "json"
+	fmt.Println(fileName)
 
-	if !*appData.NewOnboarding { //if false
-		//then append by searching file.
+	//IMP if condition always run on true
+	if !*appData.NewOnboarding { //if new_onboarding: false
+		//then append by searching file but also ensure services are not duplicate
 
-		//get the file name
-		Name := appData.AppName + "." + "json"
-		libRegEx, e := regexp.Compile(Name)
-		if e != nil {
-			log.Fatal(e)
-		}
-
-		//find the file name
-		e = filepath.Walk("/home/vikash/goProjects/golang_cicd/", func(path string, info os.FileInfo, err error) error {
-			if err == nil && libRegEx.MatchString(info.Name()) {
-				println(info.Name())
+		//check if file exists or not?
+		if _, err := os.Stat(fileName); err == nil {
+			fmt.Printf("File exists\n")
+			//read the file
+			data, err := ioutil.ReadFile(fileName)
+			if err != nil {
+				log.Panicf("failed reading data from file: %s", err)
 			}
-			return nil
-		})
-		if e != nil {
-			log.Fatal(e)
+
+			var newAppData models.RegisterAppData
+			json.Unmarshal(data, &newAppData)
+			fmt.Println(newAppData)
+			newAppData.Services = append(newAppData.Services, appData.Services...)
+			fmt.Println(newAppData.Services)
+			fmt.Println(newAppData)
+
+			fileData, _ := json.MarshalIndent(newAppData, "", " ")
+
+			_ = ioutil.WriteFile(fileName, fileData, 0644)
+			c.JSON(http.StatusOK, gin.H{"msg": appData.Services[0].Name + " service has been registered under app_name " + appData.AppName})
+
+		} else {
+			fmt.Printf("File does not exist when new_onboarding: false\n")
+			c.JSON(http.StatusInternalServerError, gin.H{"error": appData.AppName + " app_name has not been registered with us, please register it first via setting new_onboarding: true"})
 		}
 
-		//read the file
-		data, err := ioutil.ReadFile(Name)
-		if err != nil {
-			log.Panicf("failed reading data from file: %s", err)
-		}
-		var newAppData models.RegisterAppData
-		json.Unmarshal(data, &newAppData)
-		fmt.Println(newAppData)
-		newAppData.Services = append(newAppData.Services, appData.Services...)
-		fmt.Println(newAppData.Services)
-		fmt.Println(newAppData)
+	} else { //if new_onboarding is true
 
-		fileData, _ := json.MarshalIndent(newAppData, "", " ")
-
-		_ = ioutil.WriteFile(Name, fileData, 0644)
-
-	} else {
 		//then create new file
+		if _, err := os.Stat(fileName); err == nil {
+			fmt.Printf("File exists\n")
+			c.JSON(http.StatusInternalServerError, gin.H{"error": appData.AppName + " app_name name has already been regsitered with us, please choose different name"})
+		} else {
 
-		fileName := appData.AppName + "." + "json"
+			fmt.Printf("File does not exists when new_onboarding: true\n")
+			fileData, _ := json.MarshalIndent(appData, "", " ")
 
-		fileData, _ := json.MarshalIndent(appData, "", " ")
+			_ = ioutil.WriteFile(fileName, fileData, 0644)
 
-		_ = ioutil.WriteFile(fileName, fileData, 0644)
+			c.JSON(http.StatusOK, gin.H{"Your application has been registered with us! You are all set to use CICD": appData})
 
-		c.JSON(http.StatusOK, gin.H{"Your application has been registered with us! You are all set to use CICD": appData})
+		}
 
 	}
-
-	
 
 }
