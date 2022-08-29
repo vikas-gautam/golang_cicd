@@ -13,7 +13,7 @@ Password="Access token or password"
 ServerAddress="https://index.docker.io/v1/"
 ```
 
-## Need to save data of registerApp api in below format
+## Users Need to provide data of registerApp api in below format
 ```
 {
 
