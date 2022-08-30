@@ -13,15 +13,24 @@ import (
 	"github.com/vikas-gautam/golang_cicd/models"
 )
 
-var appData models.RegisterAppData
+func contains(serachIn []models.ServiceName, searchingFor string) bool {
+	for _, a := range serachIn {
+		if a.Name == searchingFor {
+			return true
+		}
+	}
+	return false
+}
+
+var appDataFromRequest models.RegisterAppData
 
 func RegisterApp(c *gin.Context) {
 
-	if err := c.BindJSON(&appData); err != nil {
+	if err := c.BindJSON(&appDataFromRequest); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 	}
 	validate := validator.New()
-	err := validate.Struct(appData)
+	err := validate.Struct(appDataFromRequest)
 	if err != nil {
 		// log out this error
 		log.Println(err)
@@ -29,40 +38,49 @@ func RegisterApp(c *gin.Context) {
 		return
 	}
 
-	fmt.Println(*appData.NewOnboarding)
+	fmt.Println(*appDataFromRequest.NewOnboarding)
 	filePath := "/home/vikash/go_registerdApp/"
 	os.MkdirAll(filePath, 0755)
-	fileName := filePath + appData.AppName + "." + "json"
+	fileName := filePath + appDataFromRequest.AppName + "." + "json"
 	fmt.Println(fileName)
 
 	//IMP if condition always run on true
-	if !*appData.NewOnboarding { //if new_onboarding: false
+	if !*appDataFromRequest.NewOnboarding { //if new_onboarding: false
 		//then append by searching file but also ensure services are not duplicate
 
 		//check if file exists or not?
 		if _, err := os.Stat(fileName); err == nil {
 			fmt.Printf("File exists\n")
+
 			//read the file
 			data, err := ioutil.ReadFile(fileName)
 			if err != nil {
 				log.Panicf("failed reading data from file: %s", err)
 			}
 
-			var newAppData models.RegisterAppData
-			json.Unmarshal(data, &newAppData)
-			fmt.Println(newAppData)
-			newAppData.Services = append(newAppData.Services, appData.Services...)
-			fmt.Println(newAppData.Services)
-			fmt.Println(newAppData)
+			//append logic
+			var existingAppData models.RegisterAppData
+			json.Unmarshal(data, &existingAppData)
+			fmt.Println(existingAppData)
 
-			fileData, _ := json.MarshalIndent(newAppData, "", " ")
+			//check duplicacy of services and then append
 
-			_ = ioutil.WriteFile(fileName, fileData, 0644)
-			c.JSON(http.StatusOK, gin.H{"msg": appData.Services[0].Name + " service has been registered under app_name " + appData.AppName})
+			if !contains(existingAppData.Services, appDataFromRequest.Services[0].Name) {
+				existingAppData.Services = append(existingAppData.Services, appDataFromRequest.Services...)
+				fmt.Println(existingAppData.Services)
+
+				//write file logic
+				fileData, _ := json.MarshalIndent(existingAppData, "", " ")
+				_ = ioutil.WriteFile(fileName, fileData, 0644)
+				c.JSON(http.StatusOK, gin.H{"msg": appDataFromRequest.Services[0].Name + " service has been registered under app_name " + appDataFromRequest.AppName})
+
+			} else {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": appDataFromRequest.Services[0].Name + " service already exists under app_name " + appDataFromRequest.AppName})
+			}
 
 		} else {
 			fmt.Printf("File does not exist when new_onboarding: false\n")
-			c.JSON(http.StatusInternalServerError, gin.H{"error": appData.AppName + " app_name has not been registered with us, please register it first via setting new_onboarding: true"})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": appDataFromRequest.AppName + " app_name has not been registered with us, please register it first via setting new_onboarding: true"})
 		}
 
 	} else { //if new_onboarding is true
@@ -70,15 +88,15 @@ func RegisterApp(c *gin.Context) {
 		//then create new file
 		if _, err := os.Stat(fileName); err == nil {
 			fmt.Printf("File exists\n")
-			c.JSON(http.StatusInternalServerError, gin.H{"error": appData.AppName + " app_name name has already been regsitered with us, please choose different name"})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": appDataFromRequest.AppName + " app_name name has already been regsitered with us, please choose different name"})
 		} else {
 
 			fmt.Printf("File does not exists when new_onboarding: true\n")
-			fileData, _ := json.MarshalIndent(appData, "", " ")
+			fileData, _ := json.MarshalIndent(appDataFromRequest, "", " ")
 
 			_ = ioutil.WriteFile(fileName, fileData, 0644)
 
-			c.JSON(http.StatusOK, gin.H{"Your application has been registered with us! You are all set to use CICD": appData})
+			c.JSON(http.StatusOK, gin.H{"Your application has been registered with us! You are all set to use CICD": appDataFromRequest})
 
 		}
 
