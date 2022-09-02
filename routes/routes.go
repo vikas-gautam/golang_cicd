@@ -12,5 +12,6 @@ func UserRoutes(incomingRoutes *gin.Engine) {
 	incomingRoutes.POST("/api/webhook/docker", controllers.Dockerwebhook)
 	incomingRoutes.GET("/go/homepage", controllers.Frontend)
 	incomingRoutes.POST("/api/registerApp", controllers.RegisterApp)
+	incomingRoutes.POST("/api/deployservice", controllers.DeployService)
 
 }

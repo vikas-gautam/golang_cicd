@@ -49,6 +49,9 @@ func CI_CodeCheckout(repoURL string, branchName string, DockerfilePath string, i
 	}
 
 	Branch := branchName
+	if Branch == "" {
+		Branch = "master"
+	}
 
 	// clean workspace before cloning repo from helpers
 	err = CleanWorkspace(DestFolder)
