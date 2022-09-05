@@ -109,7 +109,7 @@ func CodeCheckoutApi(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"msg": "docker image has been created"})
 
 	//push the docker image
-	err = helpers.DockerCommand_ImagePush(dockerRegistryUserID, dockerRepoName, imageVersion, cli)
+	err, _ = helpers.DockerCommand_ImagePush(dockerRegistryUserID, dockerRepoName, imageVersion, cli)
 	if err != nil {
 		fmt.Println(err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})

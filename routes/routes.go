@@ -13,5 +13,5 @@ func UserRoutes(incomingRoutes *gin.Engine) {
 	incomingRoutes.GET("/go/homepage", controllers.Frontend)
 	incomingRoutes.POST("/api/registerApp", controllers.RegisterApp)
 	incomingRoutes.POST("/api/deployservice", controllers.DeployService)
-
+	incomingRoutes.POST("/api/deleteservice", controllers.DeleteService)
 }

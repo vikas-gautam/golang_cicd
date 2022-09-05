@@ -57,21 +57,22 @@ func DeployService(c *gin.Context) {
 	//service_name exists so doing CICD
 
 	//CI Stage
-	imageVersion := "latest"
-	if err = helpers.CI_CodeCheckout(matchedServicedata.RepoURL, matchedServicedata.Branch, matchedServicedata.DockerfilePath, imageVersion); err != nil {
+	imageVersion := deployDataFromRequest.AppName + "-" + deployDataFromRequest.ServiceName + "-" + "latest"
+	pushedImgTag, err := helpers.CI_CodeCheckout(matchedServicedata.RepoURL, matchedServicedata.Branch, matchedServicedata.DockerfilePath, imageVersion)
+	if err != nil {
 		fmt.Println(err.Error())
 	}
-	c.JSON(http.StatusOK, gin.H{"msg": "Checkout has been completed"})
+	c.JSON(http.StatusOK, gin.H{"msg": "CI has been completed"})
 
 	//CD Stage
 
 	//fetch required fields from body
 	//Challenge is to fetch same variable those were being used while pushing image
-	imagePullURL := dockerRegistryUserID + "/" + dockerRepoName
+	//imagePullURL := dockerRegistryUserID + "/" + dockerRepoName
 
 	//create required fields to deploy application
-	imageName := imagePullURL + ":" + imageVersion
-	containerName := "goApp"
+	imageName := pushedImgTag
+	containerName := "goApp" //app_name-service_name
 
 	//deployment with pushed image (dockerhub/artifactory)
 	if err = helpers.CD_CodeDeploy(imageName, containerName); err != nil {

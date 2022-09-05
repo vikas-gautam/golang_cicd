@@ -25,7 +25,7 @@ type ErrorDetail struct {
 var userdata models.UserData
 
 // take user input and checkout code
-func CI_CodeCheckout(repoURL string, branchName string, DockerfilePath string, imageVersion string) error {
+func CI_CodeCheckout(repoURL string, branchName string, DockerfilePath string, imageVersion string) (string, error) {
 	err := godotenv.Load(".env")
 	if err != nil {
 		log.Fatalf("Some error occured. Err: %s", err)
@@ -57,7 +57,7 @@ func CI_CodeCheckout(repoURL string, branchName string, DockerfilePath string, i
 	err = CleanWorkspace(DestFolder)
 	if err != nil {
 		log.Fatal(err.Error())
-		return err
+		return "", err
 	}
 
 	//STAGE1: clone given repo
@@ -67,7 +67,7 @@ func CI_CodeCheckout(repoURL string, branchName string, DockerfilePath string, i
 		Progress:      os.Stdout,
 	})
 	if errClone != nil {
-		return errClone
+		return "", errClone
 	}
 	fmt.Println("repo cloned")
 
@@ -78,17 +78,17 @@ func CI_CodeCheckout(repoURL string, branchName string, DockerfilePath string, i
 	err = DockerCommand_ImageBuild(dockerRegistryUserID, dockerRepoName, imageVersion, DockerfileName, dockerSrcPath, cli)
 	if err != nil {
 		log.Fatal(err.Error())
-		return err
+		return "", err
 	}
 	fmt.Println("docker image has been created")
 
 	//STAGE3: push the docker image
-	err = DockerCommand_ImagePush(dockerRegistryUserID, dockerRepoName, imageVersion, cli)
+	err, pushedImgTag := DockerCommand_ImagePush(dockerRegistryUserID, dockerRepoName, imageVersion, cli)
 	if err != nil {
 		log.Fatal(err.Error())
-		return err
+		return "", err
 	}
 	fmt.Println("docker image has been pushed successfully")
 
-	return nil
+	return pushedImgTag, nil
 }

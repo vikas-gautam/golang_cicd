@@ -69,7 +69,7 @@ func DockerCommand_ImageBuild(dockerRegistryUserID string, dockerRepoName string
 
 //image push
 
-func DockerCommand_ImagePush(dockerRegistryUserID string, dockerRepoName string, imageVersion string, dockerClient *client.Client) error {
+func DockerCommand_ImagePush(dockerRegistryUserID string, dockerRepoName string, imageVersion string, dockerClient *client.Client) (error, string) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*120)
 	defer cancel()
 
@@ -102,17 +102,17 @@ func DockerCommand_ImagePush(dockerRegistryUserID string, dockerRepoName string,
 	opts := types.ImagePushOptions{RegistryAuth: authConfigEncoded}
 	rd, err := dockerClient.ImagePush(ctx, tag, opts)
 	if err != nil {
-		return err
+		return err, ""
 	}
 
 	defer rd.Close()
 
 	err = print(rd)
 	if err != nil {
-		return err
+		return err,""
 	}
 
-	return nil
+	return nil, tag
 }
 
 // docker image pull
