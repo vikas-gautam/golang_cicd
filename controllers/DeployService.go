@@ -16,6 +16,7 @@ import (
 var deployDataFromRequest models.DeployService
 
 func DeployService(c *gin.Context) {
+	
 	//putting json data into model struct
 	if err := c.BindJSON(&deployDataFromRequest); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})

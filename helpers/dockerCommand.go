@@ -69,7 +69,7 @@ func DockerCommand_ImageBuild(dockerRegistryUserID string, dockerRepoName string
 
 //image push
 
-func DockerCommand_ImagePush(dockerRegistryUserID string, dockerRepoName string, imageVersion string, dockerClient *client.Client) (error, string) {
+func DockerCommand_ImagePush(dockerRegistryUserID string, dockerRepoName string, imageVersion string, dockerClient *client.Client) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*120)
 	defer cancel()
 
@@ -102,17 +102,17 @@ func DockerCommand_ImagePush(dockerRegistryUserID string, dockerRepoName string,
 	opts := types.ImagePushOptions{RegistryAuth: authConfigEncoded}
 	rd, err := dockerClient.ImagePush(ctx, tag, opts)
 	if err != nil {
-		return err, ""
+		return "", err
 	}
 
 	defer rd.Close()
 
 	err = print(rd)
 	if err != nil {
-		return err,""
+		return "", err
 	}
 
-	return nil, tag
+	return tag, nil
 }
 
 // docker image pull
@@ -172,7 +172,6 @@ func DockerCommand_ListContainers(ctx context.Context, dockerClient *client.Clie
 
 // Stop and remove a container
 func DockerCommand_stopAndRemoveContainer(ctx context.Context, dockerClient *client.Client, containername string) error {
-	
 
 	if err := dockerClient.ContainerStop(ctx, containername, nil); err != nil {
 		log.Printf("Unable to stop container %s: %s", containername, err)

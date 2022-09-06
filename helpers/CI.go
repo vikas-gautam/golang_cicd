@@ -83,7 +83,7 @@ func CI_CodeCheckout(repoURL string, branchName string, DockerfilePath string, i
 	fmt.Println("docker image has been created")
 
 	//STAGE3: push the docker image
-	err, pushedImgTag := DockerCommand_ImagePush(dockerRegistryUserID, dockerRepoName, imageVersion, cli)
+	pushedImgTag, err := DockerCommand_ImagePush(dockerRegistryUserID, dockerRepoName, imageVersion, cli)
 	if err != nil {
 		log.Fatal(err.Error())
 		return "", err
