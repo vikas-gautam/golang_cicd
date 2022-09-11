@@ -15,5 +15,7 @@ func UserRoutes(incomingRoutes *gin.Engine) {
 	incomingRoutes.POST("/api/deployservice", controllers.DeployService)
 	incomingRoutes.DELETE("/api/deleteservice", controllers.DeleteService)
 	incomingRoutes.PUT("/api/updateservice", controllers.UpdateService)
+	incomingRoutes.POST("/api/signup", controllers.Signup)
+
 
 }
