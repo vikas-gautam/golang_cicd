@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -14,7 +13,7 @@ import (
 )
 
 var signupDataFromRequest models.SignupData
-var loggedInUsersfile = "loggedInUsersfile"
+var LoggedInUsersfile = "loggedInUsersfile"
 
 func Signup(c *gin.Context) {
 	//putting json data into model struct
@@ -31,11 +30,11 @@ func Signup(c *gin.Context) {
 		return
 	}
 
-	//convert text password into hash & base64encode 
+	//convert text password into hash & base64encode
 	hashPassword, b64encodedPassword, _ := helpers.HashPassword(signupDataFromRequest.Password)
 
-	fileName := FilePath + loggedInUsersfile + "." + "json"
-	
+	fileName := FilePath + LoggedInUsersfile + "." + "json"
+
 	//read the file
 	read_data, err := ioutil.ReadFile(fileName)
 	if err != nil {
@@ -48,19 +47,19 @@ func Signup(c *gin.Context) {
 	var newSignupRequest models.LoggedInUserdata
 	newSignupRequest.Hashpassword = hashPassword
 	newSignupRequest.Username = signupDataFromRequest.Username
+	newSignupRequest.Email = signupDataFromRequest.Email
 
-	//append logic
-	existingLoggedInDataList = append(existingLoggedInDataList, newSignupRequest)
-
-	//before writing data check if haspassword matches the encoded base64 password
-	match := helpers.CheckPasswordHash(b64encodedPassword, newSignupRequest.Hashpassword)
-	fmt.Println(match)
-	if !match {
-		log.Println("Passwords are not matching so not entitled to store locally")
-		c.JSON(http.StatusInternalServerError, gin.H{"msg": "Inconvenience caused is deeply regreted"})
+	//before appending data check if user already exists? if yes return message
+	usernameExists, _ := helpers.CheckUsername(existingLoggedInDataList, newSignupRequest.Username)
+	if usernameExists {
+		log.Println("Given user already exists")
+		c.JSON(http.StatusInternalServerError, gin.H{"msg": "given user already taken,try with other username"})
 		return
 	}
 
+	//if userexists == false
+	//append logic
+	existingLoggedInDataList = append(existingLoggedInDataList, newSignupRequest)
 	//writing hashpassword data into file
 	fileData, _ := json.MarshalIndent(existingLoggedInDataList, "", " ")
 	_ = ioutil.WriteFile(fileName, fileData, 0644)

@@ -8,5 +8,6 @@ type SignupData struct {
 
 type LoggedInUserdata struct {
 	Username     string
+	Email	     string
 	Hashpassword string
 }
