@@ -31,7 +31,7 @@ func UpdateService(c *gin.Context) {
 	}
 
 	//check if app_name exists or not
-	fileName := FilePath + updateDataFromRequest.AppName + "." + "json"
+	fileName := helpers.FilePath + updateDataFromRequest.AppName + "." + "json"
 
 	//check if file exists or not?
 	if err := helpers.RegisterApp_fileExistence(fileName); err != nil {

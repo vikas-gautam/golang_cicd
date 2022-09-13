@@ -15,7 +15,6 @@ import (
 )
 
 var appDataFromRequest models.RegisterAppData
-var FilePath = "/home/vikash/go_registerdApp/"
 
 func RegisterApp(c *gin.Context) {
 
@@ -34,34 +33,16 @@ func RegisterApp(c *gin.Context) {
 	}
 
 	//Ensuring filename is same as app_name
-	os.MkdirAll(FilePath, 0755)
-	fileName := FilePath + appDataFromRequest.AppName + "." + "json"
+	os.MkdirAll(helpers.FilePath, 0755)
+	fileName := helpers.FilePath + appDataFromRequest.AppName + "." + "json"
 
-	//read the loggedIn users file
-	loggedInUsersfileName := FilePath + LoggedInUsersfile + "." + "json"
-	read_data, err := ioutil.ReadFile(loggedInUsersfileName)
-	if err != nil {
-		log.Panicf("failed reading data from file: %s", err)
-	}
-	var existingLoggedInDataList []models.LoggedInUserdata
-	_ = json.Unmarshal(read_data, &existingLoggedInDataList)
-
-	//before appending data check if user already exists? if yes return message
-	usernameExists, matchedLoggedInData := helpers.CheckUsername(existingLoggedInDataList, appDataFromRequest.UserName)
-	if !usernameExists {
-		log.Println("Given user not found in database")
-		c.JSON(http.StatusInternalServerError, gin.H{"msg": "given user doesn't exist,First Signup with this user"})
+	validationMsg, successMsg, err := helpers.UserAuthentication(appDataFromRequest.UserName, appDataFromRequest.ApiToken)
+	if err == nil {
+		// log.Panicf("failed reading data from loggedInUsersfile: %s", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"msg": validationMsg})
 		return
 	}
-
-	//check if requested username and Hashpassword exists or not
-	match := helpers.CheckPasswordHash(matchedLoggedInData, appDataFromRequest.ApiToken)
-	fmt.Println(match)
-	if !match {
-		log.Println("Password is not matching with stored hash password")
-		c.JSON(http.StatusInternalServerError, gin.H{"msg": "Api_token is not valid, verify the token once"})
-		return
-	}
+	c.JSON(http.StatusInternalServerError, gin.H{"msg": successMsg})
 
 	//IMP: if condition always run on true
 	fmt.Println(*appDataFromRequest.NewOnboarding)

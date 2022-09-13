@@ -16,7 +16,7 @@ import (
 var deployDataFromRequest models.DeployService
 
 func DeployService(c *gin.Context) {
-	
+
 	//putting json data into model struct
 	if err := c.BindJSON(&deployDataFromRequest); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -31,7 +31,7 @@ func DeployService(c *gin.Context) {
 	}
 
 	//check if app_name exists or not
-	fileName := FilePath + deployDataFromRequest.AppName + "." + "json"
+	fileName := helpers.FilePath + deployDataFromRequest.AppName + "." + "json"
 
 	//check if file exists or not?
 	if err := helpers.RegisterApp_fileExistence(fileName); err != nil {
@@ -46,6 +46,15 @@ func DeployService(c *gin.Context) {
 	if err != nil {
 		log.Panicf("failed reading data from file: %s", err)
 	}
+
+	//user validation
+	validationMsg, successMsg, err := helpers.UserAuthentication(appDataFromRequest.UserName, appDataFromRequest.ApiToken)
+	if err == nil {
+		// log.Panicf("failed reading data from loggedInUsersfile: %s", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"msg": validationMsg})
+		return
+	}
+	c.JSON(http.StatusInternalServerError, gin.H{"msg": successMsg})
 
 	var existingAppData models.RegisterAppData
 	json.Unmarshal(data, &existingAppData)

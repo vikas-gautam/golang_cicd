@@ -33,13 +33,12 @@ func Signup(c *gin.Context) {
 	//convert text password into hash & base64encode
 	hashPassword, b64encodedPassword, _ := helpers.HashPassword(signupDataFromRequest.Password)
 
-	fileName := FilePath + LoggedInUsersfile + "." + "json"
-
-	//read the file
-	read_data, err := ioutil.ReadFile(fileName)
+	//read the loggedIn users file
+	read_data, err := helpers.LoggedInUserdata()
 	if err != nil {
-		log.Panicf("failed reading data from file: %s", err)
+		log.Panicf("failed reading data from loggedInUsersfile: %s", err)
 	}
+
 	var existingLoggedInDataList []models.LoggedInUserdata
 	_ = json.Unmarshal(read_data, &existingLoggedInDataList)
 
@@ -62,7 +61,8 @@ func Signup(c *gin.Context) {
 	existingLoggedInDataList = append(existingLoggedInDataList, newSignupRequest)
 	//writing hashpassword data into file
 	fileData, _ := json.MarshalIndent(existingLoggedInDataList, "", " ")
-	_ = ioutil.WriteFile(fileName, fileData, 0644)
+
+	_ = ioutil.WriteFile(helpers.FilePath+helpers.LoggedInUsersfile+"."+"json", fileData, 0644)
 
 	c.JSON(http.StatusOK, gin.H{"msg": "User signedUp successfully, here is your api token: " + b64encodedPassword})
 }
