@@ -6,6 +6,7 @@ require (
 	github.com/containerd/containerd v1.6.8 // indirect
 	github.com/docker/docker v20.10.17+incompatible
 	github.com/docker/go-connections v0.4.0
+	github.com/fatih/structs v1.1.0 // indirect
 	github.com/gin-gonic/gin v1.8.1
 	github.com/go-git/go-git/v5 v5.4.2
 	github.com/go-playground/validator/v10 v10.10.0

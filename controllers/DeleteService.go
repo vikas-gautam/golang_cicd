@@ -30,6 +30,20 @@ func DeleteService(c *gin.Context) {
 		return
 	}
 
+	// user authentication
+	validationMsg, successMsg, err := helpers.UserAuthentication(deleteDataFromRequest.UserName, deleteDataFromRequest.ApiToken)
+
+	if err != nil {
+		log.Panicf("failed reading data from loggedInUsersfile: %s", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"msg": "failed reading data from loggedInUsersfile"})
+		return
+	}
+	if validationMsg != "" {
+		c.JSON(http.StatusInternalServerError, gin.H{"msg": validationMsg})
+		return
+	}
+	c.JSON(http.StatusInternalServerError, gin.H{"msg": successMsg})
+
 	//check if app_name exists or not
 	fileName := helpers.FilePath + deleteDataFromRequest.AppName + "." + "json"
 
@@ -51,6 +65,7 @@ func DeleteService(c *gin.Context) {
 	serviceExists, updatedServiceList := helpers.DeleteService_Remove(existingAppData.Services, deleteDataFromRequest.ServiceName)
 	if !serviceExists {
 		c.JSON(http.StatusBadRequest, gin.H{"error": deleteDataFromRequest.ServiceName + " has not been registered with us, provide valid service_name"})
+		return
 	}
 
 	existingAppData.Services = updatedServiceList

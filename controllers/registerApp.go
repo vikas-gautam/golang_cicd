@@ -36,9 +36,15 @@ func RegisterApp(c *gin.Context) {
 	os.MkdirAll(helpers.FilePath, 0755)
 	fileName := helpers.FilePath + appDataFromRequest.AppName + "." + "json"
 
+	// user authentication
 	validationMsg, successMsg, err := helpers.UserAuthentication(appDataFromRequest.UserName, appDataFromRequest.ApiToken)
-	if err == nil {
-		// log.Panicf("failed reading data from loggedInUsersfile: %s", err)
+
+	if err != nil {
+		log.Panicf("failed reading data from loggedInUsersfile: %s", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"msg": "failed reading data from loggedInUsersfile"})
+		return
+	}
+	if validationMsg != "" {
 		c.JSON(http.StatusInternalServerError, gin.H{"msg": validationMsg})
 		return
 	}

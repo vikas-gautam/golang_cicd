@@ -13,7 +13,6 @@ func UserAuthentication(userName string, apiToken string) (string, string, error
 	read_data, err := LoggedInUserdata()
 	if err != nil {
 		return "", "", err
-		// log.Panicf("failed reading data from loggedInUsersfile: %s", err)
 	}
 
 	var existingLoggedInDataList []models.LoggedInUserdata
