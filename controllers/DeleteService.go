@@ -30,8 +30,12 @@ func DeleteService(c *gin.Context) {
 		return
 	}
 
+	// Getting headers from request
+	ApiToken := c.GetHeader("api_token")
+	UserName := c.GetHeader("username")
+
 	// user authentication
-	validationMsg, successMsg, err := helpers.UserAuthentication(deleteDataFromRequest.UserName, deleteDataFromRequest.ApiToken)
+	validationMsg, successMsg, err := helpers.UserAuthentication(UserName, ApiToken)
 
 	if err != nil {
 		log.Panicf("failed reading data from loggedInUsersfile: %s", err)

@@ -30,8 +30,12 @@ func DeployService(c *gin.Context) {
 		return
 	}
 
+	// Getting headers from request
+	ApiToken := c.GetHeader("api_token")
+	UserName := c.GetHeader("username")
+
 	// user authentication
-	validationMsg, successMsg, errReadingData := helpers.UserAuthentication(deployDataFromRequest.UserName, deployDataFromRequest.ApiToken)
+	validationMsg, successMsg, errReadingData := helpers.UserAuthentication(UserName, ApiToken)
 
 	if errReadingData != nil {
 		log.Panicf("failed reading data from loggedInUsersfile: %s", err)
