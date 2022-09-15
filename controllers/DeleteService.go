@@ -48,7 +48,7 @@ func DeleteService(c *gin.Context) {
 	fileName := helpers.FilePath + deleteDataFromRequest.AppName + "." + "json"
 
 	//check if file exists or not?
-	if err := helpers.RegisterApp_fileExistence(fileName); err != nil {
+	if err := helpers.FileExistence(fileName); err != nil {
 		fmt.Printf("File does not exist of given app_name\n")
 		c.JSON(http.StatusInternalServerError, gin.H{"error": deleteDataFromRequest.AppName + " app_name is not registered with us, please provide valid app_name"})
 	}
@@ -62,7 +62,7 @@ func DeleteService(c *gin.Context) {
 	var existingAppData models.RegisterAppData
 	json.Unmarshal(data, &existingAppData)
 
-	serviceExists, updatedServiceList := helpers.DeleteService_Remove(existingAppData.Services, deleteDataFromRequest.ServiceName)
+	serviceExists, updatedServiceList := helpers.CheckExistenceAndDeleteService(existingAppData.Services, deleteDataFromRequest.ServiceName)
 	if !serviceExists {
 		c.JSON(http.StatusBadRequest, gin.H{"error": deleteDataFromRequest.ServiceName + " has not been registered with us, provide valid service_name"})
 		return

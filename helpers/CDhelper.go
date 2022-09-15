@@ -14,24 +14,24 @@ func CD_CodeDeploy(imageName string, containerName string) error {
 	defer cancel()
 
 	//docker cli
-	cli, _ := DockerCommand_DockerClient()
+	cli, _ := DockerClient()
 
 	//STAGE1- pull docker image
-	DockerCommand_ImagePull(ctx, imageName, cli)
+	ImagePull(ctx, imageName, cli)
 
 	//STAGE2- remove existing container with same name
-	DockerCommand_stopAndRemoveContainer(ctx, cli, containerName)
+	StopAndRemoveContainer(ctx, cli, containerName)
 
 	//STAGE3- create container
-	containerID, _ := DockerCommand_ContainerCreate(ctx, imageName, containerName, cli)
+	containerID, _ := ContainerCreate(ctx, imageName, containerName, cli)
 
 	//STAGE4- Start container
-	DockerCommand_ContainerStart(ctx, containerID.ID, cli)
+	ContainerStart(ctx, containerID.ID, cli)
 
 	fmt.Println(containerID)
 
 	//STAGE5- list containers
-	containers := DockerCommand_ListContainers(ctx, cli)
+	containers := ListContainers(ctx, cli)
 	fmt.Println(containers)
 
 	return nil

@@ -48,7 +48,7 @@ func DeployService(c *gin.Context) {
 	fileName := helpers.FilePath + deployDataFromRequest.AppName + "." + "json"
 
 	//check if file exists or not?
-	if err := helpers.RegisterApp_fileExistence(fileName); err != nil {
+	if err := helpers.FileExistence(fileName); err != nil {
 		fmt.Printf("File does not exist of given app_name\n")
 		c.JSON(http.StatusInternalServerError, gin.H{"error": deployDataFromRequest.AppName + " app_name has not been registered with us, please register it first via calling register app api"})
 	}

@@ -94,13 +94,13 @@ func CodeCheckoutApi(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"msg": "repo cloned"})
 
 	//docker client for image build and push
-	cli, err := helpers.DockerCommand_DockerClient()
+	cli, err := helpers.DockerClient()
 	if err != nil {
 		fmt.Println(err.Error())
 		return
 	}
 
-	err = helpers.DockerCommand_ImageBuild(dockerRegistryUserID, dockerRepoName, imageVersion, DockerfileName, dockerSrcPath, cli)
+	err = helpers.ImageBuild(dockerRegistryUserID, dockerRepoName, imageVersion, DockerfileName, dockerSrcPath, cli)
 	if err != nil {
 		fmt.Println(err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -109,7 +109,7 @@ func CodeCheckoutApi(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"msg": "docker image has been created"})
 
 	//push the docker image
-	_, err = helpers.DockerCommand_ImagePush(dockerRegistryUserID, dockerRepoName, imageVersion, cli)
+	_, err = helpers.ImagePush(dockerRegistryUserID, dockerRepoName, imageVersion, cli)
 	if err != nil {
 		fmt.Println(err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})

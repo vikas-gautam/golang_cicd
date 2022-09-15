@@ -57,7 +57,7 @@ func RegisterApp(c *gin.Context) {
 		//then append by searching file but also ensure services are not duplicate
 
 		//check if file exists or not?
-		if err := helpers.RegisterApp_fileExistence(fileName); err != nil {
+		if err := helpers.FileExistence(fileName); err != nil {
 			fmt.Printf("File does not exist when new_onboarding: false\n")
 			c.JSON(http.StatusInternalServerError, gin.H{"error": appDataFromRequest.AppName + " app_name has not been registered with us, please register it first via setting new_onboarding: true"})
 		}
@@ -74,7 +74,7 @@ func RegisterApp(c *gin.Context) {
 		fmt.Println(existingAppData)
 
 		//check duplicacy of services and then append
-		if !helpers.RegisterApp_Contains(existingAppData.Services, appDataFromRequest.Services) {
+		if !helpers.ContainsStruct(existingAppData.Services, appDataFromRequest.Services) {
 			existingAppData.Services = append(existingAppData.Services, appDataFromRequest.Services...)
 			fmt.Println(existingAppData.Services)
 
@@ -90,7 +90,7 @@ func RegisterApp(c *gin.Context) {
 
 	//if new_onboarding: true then create new file
 	//check if intended file exists or not?
-	if err := helpers.RegisterApp_fileExistence(fileName); err != nil {
+	if err := helpers.FileExistence(fileName); err != nil {
 		fmt.Printf("File does not exist when new_onboarding: true\n")
 
 		fileData, _ := json.MarshalIndent(appDataFromRequest, "", " ")

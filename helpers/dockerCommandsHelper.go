@@ -21,7 +21,7 @@ import (
 )
 
 // initiate a client to talk to docker daemon
-func DockerCommand_DockerClient() (*client.Client, error) {
+func DockerClient() (*client.Client, error) {
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
 		fmt.Println(err.Error())
@@ -30,7 +30,7 @@ func DockerCommand_DockerClient() (*client.Client, error) {
 	return cli, nil
 }
 
-func DockerCommand_ImageBuild(dockerRegistryUserID string, dockerRepoName string, imageVersion string, DockerfileName string, dockerSrcPath string, dockerClient *client.Client) error {
+func ImageBuild(dockerRegistryUserID string, dockerRepoName string, imageVersion string, DockerfileName string, dockerSrcPath string, dockerClient *client.Client) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*200)
 	defer cancel()
 
@@ -69,7 +69,7 @@ func DockerCommand_ImageBuild(dockerRegistryUserID string, dockerRepoName string
 
 //image push
 
-func DockerCommand_ImagePush(dockerRegistryUserID string, dockerRepoName string, imageVersion string, dockerClient *client.Client) (string, error) {
+func ImagePush(dockerRegistryUserID string, dockerRepoName string, imageVersion string, dockerClient *client.Client) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*120)
 	defer cancel()
 
@@ -117,7 +117,7 @@ func DockerCommand_ImagePush(dockerRegistryUserID string, dockerRepoName string,
 
 // docker image pull
 
-func DockerCommand_ImagePull(ctx context.Context, imageName string, dockerClient *client.Client) {
+func ImagePull(ctx context.Context, imageName string, dockerClient *client.Client) {
 
 	out, err := dockerClient.ImagePull(ctx, imageName, types.ImagePullOptions{})
 	if err != nil {
@@ -129,7 +129,7 @@ func DockerCommand_ImagePull(ctx context.Context, imageName string, dockerClient
 
 //Container create
 
-func DockerCommand_ContainerCreate(ctx context.Context, imageName string, containerName string, dockerClient *client.Client) (container.ContainerCreateCreatedBody, error) {
+func ContainerCreate(ctx context.Context, imageName string, containerName string, dockerClient *client.Client) (container.ContainerCreateCreatedBody, error) {
 
 	hostBinding := nat.PortBinding{
 		HostIP:   "0.0.0.0",
@@ -151,7 +151,7 @@ func DockerCommand_ContainerCreate(ctx context.Context, imageName string, contai
 
 //Container Start
 
-func DockerCommand_ContainerStart(ctx context.Context, containerID string, dockerClient *client.Client) {
+func ContainerStart(ctx context.Context, containerID string, dockerClient *client.Client) {
 	if err := dockerClient.ContainerStart(ctx, containerID, types.ContainerStartOptions{}); err != nil {
 		panic(err)
 	}
@@ -160,7 +160,7 @@ func DockerCommand_ContainerStart(ctx context.Context, containerID string, docke
 
 //list containers
 
-func DockerCommand_ListContainers(ctx context.Context, dockerClient *client.Client) []types.Container {
+func ListContainers(ctx context.Context, dockerClient *client.Client) []types.Container {
 
 	containers, err := dockerClient.ContainerList(ctx, types.ContainerListOptions{})
 	if err != nil {
@@ -171,7 +171,7 @@ func DockerCommand_ListContainers(ctx context.Context, dockerClient *client.Clie
 }
 
 // Stop and remove a container
-func DockerCommand_stopAndRemoveContainer(ctx context.Context, dockerClient *client.Client, containername string) error {
+func StopAndRemoveContainer(ctx context.Context, dockerClient *client.Client, containername string) error {
 
 	if err := dockerClient.ContainerStop(ctx, containername, nil); err != nil {
 		log.Printf("Unable to stop container %s: %s", containername, err)

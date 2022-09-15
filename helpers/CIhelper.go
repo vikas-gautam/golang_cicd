@@ -72,10 +72,10 @@ func CI_CodeCheckout(repoURL string, branchName string, DockerfilePath string, i
 	fmt.Println("repo cloned")
 
 	//docker client to talk with docker daemon from helpers
-	cli, _ := DockerCommand_DockerClient()
+	cli, _ := DockerClient()
 
 	//STAGE2: build the docker image
-	err = DockerCommand_ImageBuild(dockerRegistryUserID, dockerRepoName, imageVersion, DockerfileName, dockerSrcPath, cli)
+	err = ImageBuild(dockerRegistryUserID, dockerRepoName, imageVersion, DockerfileName, dockerSrcPath, cli)
 	if err != nil {
 		log.Fatal(err.Error())
 		return "", err
@@ -83,7 +83,7 @@ func CI_CodeCheckout(repoURL string, branchName string, DockerfilePath string, i
 	fmt.Println("docker image has been created")
 
 	//STAGE3: push the docker image
-	pushedImgTag, err := DockerCommand_ImagePush(dockerRegistryUserID, dockerRepoName, imageVersion, cli)
+	pushedImgTag, err := ImagePush(dockerRegistryUserID, dockerRepoName, imageVersion, cli)
 	if err != nil {
 		log.Fatal(err.Error())
 		return "", err

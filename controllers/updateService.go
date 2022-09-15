@@ -48,7 +48,7 @@ func UpdateService(c *gin.Context) {
 	fileName := helpers.FilePath + updateDataFromRequest.AppName + "." + "json"
 
 	//check if file exists or not?
-	if err := helpers.RegisterApp_fileExistence(fileName); err != nil {
+	if err := helpers.FileExistence(fileName); err != nil {
 		fmt.Printf("File does not exist of given app_name\n")
 		c.JSON(http.StatusInternalServerError, gin.H{"error": updateDataFromRequest.AppName + " app_name is not registered with us, please provide valid app_name"})
 	}
@@ -62,7 +62,7 @@ func UpdateService(c *gin.Context) {
 	var existingAppData models.RegisterAppData
 	json.Unmarshal(data, &existingAppData)
 
-	serviceExists, updatedExistingAppData := helpers.UpdateService_Contains(existingAppData.Services, updateDataFromRequest.Services)
+	serviceExists, updatedExistingAppData := helpers.CheckExistenceAndReturnStruct(existingAppData.Services, updateDataFromRequest.Services)
 
 	if !serviceExists {
 		c.JSON(http.StatusBadRequest, gin.H{"error": deployDataFromRequest.ServiceName + " has not been registered with us"})
