@@ -30,24 +30,6 @@ func UpdateService(c *gin.Context) {
 		return
 	}
 
-	// Getting headers from request
-	ApiToken := c.GetHeader("api_token")
-	UserName := c.GetHeader("username")
-
-	// user authentication
-	validationMsg, successMsg, err := helpers.UserAuthentication(UserName, ApiToken)
-
-	if err != nil {
-		log.Panicf("failed reading data from loggedInUsersfile: %s", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"msg": "failed reading data from loggedInUsersfile"})
-		return
-	}
-	if validationMsg != "" {
-		c.JSON(http.StatusInternalServerError, gin.H{"msg": validationMsg})
-		return
-	}
-	c.JSON(http.StatusInternalServerError, gin.H{"msg": successMsg})
-
 	//check if app_name exists or not
 	fileName := helpers.FilePath + updateDataFromRequest.AppName + "." + "json"
 
